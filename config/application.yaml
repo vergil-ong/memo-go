@@ -1,0 +1,23 @@
+app:
+  name: memo-api-service
+
+log:
+  file-path: /Users/wangshuo/logs/go/MemoProjects/info.log
+
+datasource:
+  host: localhost
+  port: 3306
+  username: root
+  password: 123456
+  database: memo
+
+redis:
+  host: 127.0.0.1:6379
+  password:
+
+session:
+  timeout: 1m
+
+auth:
+  no-login:
+    - /login/code

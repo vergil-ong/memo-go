@@ -14,7 +14,19 @@ func NoticeList(context *gin.Context) {
 	var memos []model.Memo
 	conn.Table(config.TableMemo).Limit(10).Find(&memos)
 
-	success := model.Success(memos)
+	memoVos := make([]*model.MemoVo, len(memos))
+
+	for index, memo := range memos {
+		mVo := new(model.MemoVo)
+		mVo.Id = memo.Id
+		mVo.Title = memo.Title
+		mVo.DescShow = memo.DescShow
+		mVo.NoticeTime = memo.NoticeTime.UnixMilli()
+
+		memoVos[index] = mVo
+	}
+
+	success := model.Success(memoVos)
 	context.JSON(model.HttpSuccess, success)
 }
 

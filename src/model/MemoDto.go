@@ -18,3 +18,10 @@ type Memo struct {
 	CreateTime time.Time `json:"createTime"`
 	UpdateTime time.Time `json:"updateTime"`
 }
+
+type MemoVo struct {
+	Id         uint   `json:"id"`
+	Title      string `json:"title"`
+	DescShow   string `json:"descShow"`
+	NoticeTime int64  `json:"noticeTime"`
+}

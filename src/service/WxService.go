@@ -47,8 +47,8 @@ func AuthCode2Session(code string) string {
 	json.Unmarshal(body, &result)
 
 	client := config.GetRedisPoolClient()
-	s, err := client.Ping(context.Background()).Result()
-	logger.Logger.Info("ping result is " + s)
+	//s, err := client.Ping(context.Background()).Result()
+	//logger.Logger.Info("ping result is " + s)
 	timeOutMinutes := viper.GetDuration("session.timeout")
 	authCode := GetAuthCode(code)
 	client.Set(context.Background(), authCode, logger.GetJson(result), timeOutMinutes)

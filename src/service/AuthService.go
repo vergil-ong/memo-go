@@ -4,6 +4,7 @@ import (
 	"MemoProjects/src/config"
 	"MemoProjects/src/logger"
 	"context"
+	"github.com/spf13/viper"
 )
 
 const AuthCodePrefix = "AUTH_"
@@ -22,6 +23,8 @@ func AuthLoginToken(token string) bool {
 	}
 
 	if result > 0 {
+		timeOutMinutes := viper.GetDuration("session.timeout")
+		client.Expire(context.Background(), token, timeOutMinutes)
 		return true
 	} else {
 		return false

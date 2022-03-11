@@ -4,6 +4,7 @@ import (
 	"MemoProjects/src/config"
 	"MemoProjects/src/logger"
 	"MemoProjects/src/model"
+	"MemoProjects/src/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"time"
@@ -50,4 +51,21 @@ func NoticeAdd(context *gin.Context) {
 
 	success := model.Success(memo)
 	context.JSON(model.HttpSuccess, success)
+}
+
+func NoticeTaskAdd(context *gin.Context) {
+	var memoQo model.NoticeQo
+
+	context.BindJSON(&memoQo)
+	logger.Logger.Info("memoQo is ", zap.String("memoQo", logger.GetJson(memoQo)))
+
+	//生成task
+	task := service.AddNoticeTask(memoQo)
+	if task == (model.MemoTask{}) {
+		model.ReturnSuccess(task, context)
+		return
+	}
+
+	//根据task 生成 memo
+	service.AddMemoFromTask(task)
 }

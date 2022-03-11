@@ -1,5 +1,7 @@
 package model
 
+import "github.com/gin-gonic/gin"
+
 type ResultVo struct {
 	Code int
 	Data interface{}
@@ -13,4 +15,9 @@ func Success(data interface{}) ResultVo {
 	resultVo.Data = data
 
 	return resultVo
+}
+
+func ReturnSuccess(data interface{}, context *gin.Context) {
+	success := Success(data)
+	context.JSON(HttpSuccess, success)
 }

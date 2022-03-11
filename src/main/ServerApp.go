@@ -24,6 +24,7 @@ func main() {
 		{
 			noticeApi.GET("/list", controller.NoticeList)
 			noticeApi.POST("/add", controller.NoticeAdd)
+			noticeApi.POST("/task/add", controller.NoticeTaskAdd)
 		}
 		loginApi := apiV1.Group("/login")
 		{

@@ -11,11 +11,17 @@ type TestTable struct {
 	TestDate time.Time `json:"TestDate"`
 }
 
+type User struct {
+	Id     uint
+	OpenId string
+}
+
 type Memo struct {
 	Id         uint   `json:"id" gorm:"AUTO_INCREMENT"`
 	Title      string `json:"title"`
 	DescShow   string `json:"descShow"`
 	TaskId     uint
+	UserId     uint
 	NoticeTime time.Time `json:"noticeTime"`
 	CreateTime time.Time `json:"createTime"`
 	UpdateTime time.Time `json:"updateTime"`
@@ -25,6 +31,7 @@ type MemoTask struct {
 	Id                          uint   `json:"id" gorm:"AUTO_INCREMENT"`
 	Title                       string `json:"title"`
 	Desc                        string `json:"desc"`
+	UserId                      uint
 	NoticeType                  int
 	NoticeOnceTime              time.Time
 	NoticePeriodFirstTime       time.Time
@@ -34,7 +41,7 @@ type MemoTask struct {
 	CreateTime                  time.Time
 }
 
-const NOTICE_TYPE_ONCE = 1
+const NoticeTypeOnce = 1
 const NOTICE_TYPE_CIRCLE = 2
 
 func MemoTaskParseNoticeType(noticeTypeStr string) int {
@@ -55,4 +62,17 @@ func MemoTaskParseNoticeOnceTime(noticeOnceCal string, noticeOnceTime string) ti
 func MemoTaskParseNoticePeriodFirstTime(noticeOnceTime time.Time, beforeMinutes int) time.Time {
 	duration, _ := time.ParseDuration("-" + strconv.Itoa(beforeMinutes) + "m")
 	return noticeOnceTime.Add(duration)
+}
+
+const MemoNoticeStatusRecord = 1
+const MemoNoticeStatusSend = 2
+
+type MemoNotice struct {
+	Id           uint
+	NoticeTime   time.Time
+	Title        string
+	DescShow     string
+	TaskId       uint
+	CreateTime   time.Time
+	NoticeStatus int
 }

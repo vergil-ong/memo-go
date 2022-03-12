@@ -5,7 +5,13 @@ import (
 	"MemoProjects/src/controller"
 	"MemoProjects/src/logger"
 	"MemoProjects/src/middleware"
+	"MemoProjects/src/service"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
@@ -39,5 +45,26 @@ func main() {
 
 	engine.GET("/user/:id", controller.TestUserGetId)
 
-	engine.Run(":8001")
+	//ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(time.Second * 10)
+	go service.DoNoticeTimeService(*ticker)
+
+	err := engine.Run(":8001")
+	if err != nil {
+		logger.Logger.Error("start engine error ", zap.String("error", err.Error()))
+	}
+
+	shutDownServer(*ticker)
+}
+
+func shutDownServer(ticker time.Ticker) {
+	quit := make(chan os.Signal)
+	// kill (no param) default send syscanll.SIGTERM
+	// kill -2 is syscall.SIGINT
+	// kill -9 is syscall. SIGKILL but can"t be catch, so don't need add it
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	logger.Logger.Info("Shutdown Server")
+
+	ticker.Stop()
 }

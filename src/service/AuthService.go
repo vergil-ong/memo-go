@@ -3,7 +3,10 @@ package service
 import (
 	"MemoProjects/src/config"
 	"MemoProjects/src/logger"
+	"MemoProjects/src/model"
 	"context"
+	"encoding/json"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
 
@@ -29,4 +32,30 @@ func AuthLoginToken(token string) bool {
 	} else {
 		return false
 	}
+}
+
+func GetAuthInfo(ginContext *gin.Context) (AuthCode2SessionVo, model.User) {
+	authToken := ginContext.GetHeader("authentication_token")
+	client := config.GetRedisPoolClient()
+	result, err := client.Get(context.Background(), authToken).Result()
+	var sessionVo AuthCode2SessionVo
+	var user model.User
+	if err != nil {
+		logger.Logger.Error("cannot get check token " + authToken)
+		return sessionVo, user
+	}
+
+	err = json.Unmarshal([]byte(result), &sessionVo)
+	if err != nil {
+		logger.Logger.Error("json.Unmarshal error " + authToken)
+		return sessionVo, user
+	}
+
+	dbCon := config.GetConn()
+	dbCon.
+		Table(config.TableUser).
+		Where("open_id = ?", sessionVo.Openid).
+		First(&user)
+
+	return sessionVo, user
 }

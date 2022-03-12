@@ -4,20 +4,22 @@ import (
 	"MemoProjects/src/config"
 	"MemoProjects/src/logger"
 	"MemoProjects/src/model"
+	"strconv"
 	"time"
 )
 
-func AddNoticeTask(qo model.NoticeQo) model.MemoTask {
+func AddNoticeTask(qo model.NoticeQo, user model.User) model.MemoTask {
 	conn := config.GetConn()
 
 	task := model.MemoTask{}
 
 	noticeType := model.MemoTaskParseNoticeType(qo.NoticeType)
-	if noticeType == model.NOTICE_TYPE_ONCE {
+	if noticeType == model.NoticeTypeOnce {
 		onceTime := model.MemoTaskParseNoticeOnceTime(qo.NoticeOnceCal, qo.NoticeOnceTime)
 		task = model.MemoTask{
 			Title:                       qo.Title,
 			Desc:                        qo.Desc,
+			UserId:                      user.Id,
 			NoticeType:                  noticeType,
 			NoticeOnceTime:              onceTime,
 			NoticePeriodFirstTimeMinute: qo.NoticePeriodFirstTime,
@@ -32,22 +34,63 @@ func AddNoticeTask(qo model.NoticeQo) model.MemoTask {
 	return task
 }
 
-func AddMemoFromTask(task model.MemoTask) {
+func AddMemoFromTask(task model.MemoTask, user model.User) {
 	if task == (model.MemoTask{}) {
-		logger.Logger.Info("task is empty")
+		logger.Logger.Info("AddMemoFromTask task is empty")
 		return
 	}
 	conn := config.GetConn()
-	if task.NoticeType == model.NOTICE_TYPE_ONCE {
+	if task.NoticeType == model.NoticeTypeOnce {
+		//取最后一次提醒的时间，这样 提醒了之后 查看列表能看到
+		addMinutes := task.NoticePeriodInterval * task.NoticePeriodTimes
+		duration, _ := time.ParseDuration(strconv.Itoa(addMinutes) + "m")
+		lastNoticeTime := task.NoticeOnceTime.Add(duration)
+		if lastNoticeTime.Before(task.NoticeOnceTime) {
+			lastNoticeTime = task.NoticeOnceTime
+		}
 		memo := model.Memo{
 			Title:      task.Title,
 			DescShow:   task.Desc,
 			TaskId:     task.Id,
-			NoticeTime: task.NoticePeriodFirstTime,
+			UserId:     user.Id,
+			NoticeTime: lastNoticeTime,
 			CreateTime: time.Now(),
 			UpdateTime: time.Now(),
 		}
 		conn.Table(config.TableMemo).
 			Create(&memo)
+	}
+}
+
+func AddMemoNotice(task model.MemoTask) {
+	if task == (model.MemoTask{}) {
+		logger.Logger.Info("AddMemoNotice task is empty")
+		return
+	}
+
+	conn := config.GetConn()
+
+	if task.NoticeType == model.NoticeTypeOnce {
+		//一次性任务
+		//根据 预计第一次提醒时间，间隔，次数 生成一组 提醒，放入数据库中
+		//数据库 再记录 是否 已经发过消息
+		memoNotices := make([]*model.MemoNotice, task.NoticePeriodTimes)
+		var noticeTime time.Time
+		for i := 0; i < task.NoticePeriodTimes; i++ {
+			addMinutes := task.NoticePeriodInterval * i
+			duration, _ := time.ParseDuration(strconv.Itoa(addMinutes) + "m")
+			noticeTime = task.NoticePeriodFirstTime.Add(duration)
+			notice := model.MemoNotice{
+				NoticeTime:   noticeTime,
+				Title:        task.Title,
+				DescShow:     task.Desc,
+				TaskId:       task.Id,
+				CreateTime:   time.Now(),
+				NoticeStatus: model.MemoNoticeStatusRecord,
+			}
+			memoNotices[i] = &notice
+		}
+
+		conn.Table(config.TableMemoNotice).CreateInBatches(memoNotices, 100)
 	}
 }

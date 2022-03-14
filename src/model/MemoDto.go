@@ -39,10 +39,14 @@ type MemoTask struct {
 	NoticePeriodTimes           int
 	NoticePeriodInterval        int
 	CreateTime                  time.Time
+	NoticeTaskStatus            int
 }
 
 const NoticeTypeOnce = 1
 const NOTICE_TYPE_CIRCLE = 2
+
+const NoticeTaskStatusCreate = 1
+const NoticeTaskStatusDone = 2
 
 func MemoTaskParseNoticeType(noticeTypeStr string) int {
 	if "一次性提醒" == noticeTypeStr {

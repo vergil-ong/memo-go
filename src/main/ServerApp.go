@@ -31,6 +31,8 @@ func main() {
 			noticeApi.GET("/list", controller.NoticeList)
 			noticeApi.POST("/add", controller.NoticeAdd)
 			noticeApi.POST("/task/add", controller.NoticeTaskAdd)
+			noticeApi.POST("/memo/done", controller.NoticeMemoDone)
+			noticeApi.GET("/memo/task/:memoId", controller.NoticeMemoTask)
 		}
 		loginApi := apiV1.Group("/login")
 		{
@@ -45,8 +47,8 @@ func main() {
 
 	engine.GET("/user/:id", controller.TestUserGetId)
 
-	//ticker := time.NewTicker(time.Minute)
-	ticker := time.NewTicker(time.Second * 10)
+	ticker := time.NewTicker(time.Minute)
+	//ticker := time.NewTicker(time.Second * 10)
 	go service.DoNoticeTimeService(*ticker)
 
 	err := engine.Run(":8001")

@@ -9,4 +9,5 @@ type NoticeQo struct {
 	NoticePeriodFirstTime int    `json:"noticePeriodFirstTime" form:"noticePeriodFirstTime"`
 	NoticePeriodTimes     int    `json:"noticePeriodTimes" form:"noticePeriodTimes"`
 	NoticePeriodInterval  int    `json:"noticePeriodInterval" form:"noticePeriodInterval"`
+	NoticeMemoId          int    `json:"noticeMemoId" form:"noticeMemoId"`
 }

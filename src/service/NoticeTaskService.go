@@ -27,6 +27,7 @@ func AddNoticeTask(qo model.NoticeQo, user model.User) model.MemoTask {
 			NoticePeriodInterval:        qo.NoticePeriodInterval,
 			NoticePeriodFirstTime:       model.MemoTaskParseNoticePeriodFirstTime(onceTime, qo.NoticePeriodFirstTime),
 			CreateTime:                  time.Now(),
+			NoticeTaskStatus:            model.NoticeTaskStatusCreate,
 		}
 		conn.Table(config.TableMemoTask).Create(&task)
 	}
@@ -93,4 +94,39 @@ func AddMemoNotice(task model.MemoTask) {
 
 		conn.Table(config.TableMemoNotice).CreateInBatches(memoNotices, 100)
 	}
+}
+
+func UpdateMemoTaskDone(memoId int) {
+	conn := config.GetConn()
+
+	var memo model.Memo
+	conn.Table(config.TableMemo).Where("id = ?", memoId).First(&memo)
+
+	if memo == (model.Memo{}) {
+		logger.Logger.Info("memo id null " + strconv.Itoa(memoId))
+		return
+	}
+
+	conn.Table(config.TableMemoTask).
+		Where("id = ?", memo.TaskId).
+		Updates(model.MemoTask{NoticeTaskStatus: model.NoticeTaskStatusDone})
+	conn.Table(config.TableMemo).Delete(&memo)
+}
+
+func MemoTaskInfo(memoId int) model.MemoTask {
+	conn := config.GetConn()
+	var memo model.Memo
+	conn.Table(config.TableMemo).Where("id = ?", memoId).First(&memo)
+
+	if memo == (model.Memo{}) {
+		logger.Logger.Info("memo id null " + strconv.Itoa(memoId))
+		return model.MemoTask{}
+	}
+
+	var memoTask model.MemoTask
+	conn.Table(config.TableMemoTask).
+		Where("id = ?", memo.TaskId).
+		First(&memoTask)
+
+	return memoTask
 }

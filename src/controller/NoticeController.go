@@ -5,8 +5,10 @@ import (
 	"MemoProjects/src/logger"
 	"MemoProjects/src/model"
 	"MemoProjects/src/service"
+	"MemoProjects/src/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"strconv"
 	"time"
 )
 
@@ -22,7 +24,7 @@ func NoticeList(context *gin.Context) {
 	var memos []model.Memo
 	conn.
 		Table(config.TableMemo).
-		Where("user_id = ? AND notice_time > ?", user.Id, time.Now()).
+		Where("user_id = ? ", user.Id).
 		Order("notice_time asc").
 		Limit(10).
 		Find(&memos)
@@ -35,6 +37,26 @@ func NoticeList(context *gin.Context) {
 		mVo.Title = memo.Title
 		mVo.DescShow = memo.DescShow
 		mVo.NoticeTime = memo.NoticeTime.UnixMilli()
+
+		diffTodayEnd := utils.GetDiffDays(utils.GetTodayEndUnixMilli(), memo.NoticeTime.UnixMilli())
+		diffTodayStart := utils.GetDiffDays(memo.NoticeTime.UnixMilli(), utils.GetTodayStartUnixMilli())
+		//days := utils.GetDiffDays(utils.GetTodayEndUnixMilli(), memo.NoticeTime.UnixMilli())
+		noticeTimeShow := ""
+		if diffTodayEnd > 0 {
+			noticeTimeShow = strconv.Itoa(diffTodayEnd) + "天后" + memo.NoticeTime.Format("15:04:05")
+		} else if diffTodayStart < 0 {
+			noticeTimeShow = strconv.Itoa(diffTodayEnd) + "天前" + memo.NoticeTime.Format("15:04:05")
+		} else {
+			noticeTimeShow = "当天" + memo.NoticeTime.Format("15:04:05")
+		}
+		/*if days > 0 {
+			noticeTimeShow = strconv.FormatInt(days, 10) + "天后" + memo.NoticeTime.Format("15:04:05")
+		} else if days == 0 {
+			noticeTimeShow = "当天" + memo.NoticeTime.Format("15:04:05")
+		} else {
+			noticeTimeShow = strconv.FormatInt(days, 10) + "天前" + memo.NoticeTime.Format("15:04:05")
+		}*/
+		mVo.NoticeTimeShow = noticeTimeShow
 
 		memoVos[index] = mVo
 	}
@@ -89,4 +111,31 @@ func NoticeTaskAdd(context *gin.Context) {
 	service.AddMemoFromTask(task, user)
 
 	service.AddMemoNotice(task)
+}
+
+func NoticeMemoDone(context *gin.Context) {
+	var memoQo model.NoticeQo
+	err := context.BindJSON(&memoQo)
+
+	if err != nil {
+		logger.Logger.Info("NoticeMemoDone bind memoQo error")
+		return
+	}
+
+	logger.Logger.Info("memoQo is ", zap.String("memoQo", logger.GetJson(memoQo)))
+
+	memoId := memoQo.NoticeMemoId
+	service.UpdateMemoTaskDone(memoId)
+}
+
+func NoticeMemoTask(context *gin.Context) {
+	memoId := context.Param("memoId")
+	memoIdInt, err := strconv.Atoi(memoId)
+	if err != nil {
+		logger.Logger.Error("NoticeMemoTask parse int error " + memoId)
+		return
+	}
+	info := service.MemoTaskInfo(memoIdInt)
+
+	model.ReturnSuccess(info, context)
 }
